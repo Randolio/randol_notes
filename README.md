@@ -1,3 +1,6 @@
+# Showcase:
+- https://streamable.com/hksbds
+
 # Requirements:
 - https://github.com/overextended/ox_inventory
 - https://github.com/overextended/ox_lib
@@ -20,4 +23,5 @@
 	},
 
 # 
-
+Run the sql. Put the notepad in a shop or in a loot pool somewhere. 
+It will automatically assign an id to the notepad and insert a row into the database for it when it's created.
