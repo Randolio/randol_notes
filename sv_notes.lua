@@ -26,7 +26,7 @@ lib.callback.register('randol_notes:server:getNotes', function(source, noteid)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     local notesData = {}
-    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE citizenid = ? and noteid = ?', {Player.PlayerData.citizenid, noteid})
+    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
 
     if result and result[1] then
         notesData = json.decode(result[1].notes)
@@ -42,7 +42,7 @@ RegisterNetEvent('randol_notes:server:newNote', function(note, isSigned, noteid)
     local Player = QBCore.Functions.GetPlayer(src)
     local currentDate = os.date("%d-%m-%Y")
     local existingNotes = {}
-    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE citizenid = ? and noteid = ?', {Player.PlayerData.citizenid, noteid})
+    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
 
     if result and result[1] then
         existingNotes = json.decode(result[1].notes)
@@ -50,7 +50,7 @@ RegisterNetEvent('randol_notes:server:newNote', function(note, isSigned, noteid)
         local newNote = { id = #existingNotes + 1, text = note, signed = isSigned, date = currentDate }
         existingNotes[#existingNotes+1] = newNote 
 
-        MySQL.update('UPDATE rnotes SET notes = ? WHERE citizenid = ? and noteid = ?', {json.encode(existingNotes), Player.PlayerData.citizenid, noteid})
+        MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
         QBCore.Functions.Notify(src, 'New note added with ID ' .. newNote.id .. ': ' .. note, 'success')
         Wait(500)
         TriggerClientEvent("randol_notes:client:useItem", src, noteid)
@@ -61,7 +61,7 @@ RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     local noteId = tonumber(data.id)
-    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE citizenid = ? and noteid = ?', {Player.PlayerData.citizenid, noteid})
+    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
     local existingNotes = {}
     if result[1] then
         local removed = false
@@ -75,13 +75,24 @@ RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
             end
         end
         if removed then
-            MySQL.update('UPDATE rnotes SET notes = ? WHERE citizenid = ? and noteid = ?', {json.encode(existingNotes), Player.PlayerData.citizenid, noteid})
+            MySQL.update('UPDATE rnotes SET notes = ? noteid = ?', {json.encode(existingNotes), noteid})
             QBCore.Functions.Notify(src, 'Successfully deleted note with ID ' .. noteId, 'success')
             Wait(500)
             TriggerClientEvent("randol_notes:client:useItem", src, noteid)
         end
     end
 end)
+
+QBCore.Commands.Add("tornnote", "", {}, false, function(source, args)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    local msg = table.concat(args, ' ')
+    local name = 'Unsigned'
+    local currentDate = os.date("%d-%m-%Y")
+    local description = ('%s | %s\n\nNote: %s'):format(currentDate, name, msg)
+    local metadata = { note = msg, description = description, }
+    ox_inv:AddItem(src, 'tornnote', 1, metadata)
+end, "god")
 
 RegisterNetEvent('randol_notes:server:newTornNote', function(note, isSigned)
     local src = source
@@ -104,7 +115,7 @@ RegisterNetEvent('randol_notes:server:ripNote', function(data, noteid)
     local description = ('%s | %s\n\nNote: %s'):format(date, name, message)
     local metadata = { note = message, description = description, }
 
-    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE citizenid = ? and noteid = ?', {Player.PlayerData.citizenid, noteid})
+    local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
     local existingNotes = {}
 
     if result[1] then
@@ -119,7 +130,7 @@ RegisterNetEvent('randol_notes:server:ripNote', function(data, noteid)
             end
         end
         if removed then
-            MySQL.update('UPDATE rnotes SET notes = ? WHERE citizenid = ? and noteid = ?', {json.encode(existingNotes), Player.PlayerData.citizenid, noteid})
+            MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
             QBCore.Functions.Notify(src, "Note successfully ripped out.", "success")
             ox_inv:AddItem(src, 'tornnote', 1, metadata)
         end
@@ -128,10 +139,19 @@ end)
 
 local NOTEPAD_HOOK = ox_inv:registerHook('createItem', function(payload)
     local metadata = payload.metadata
+    if metadata.unique then
+        return metadata
+    end
     local Player = QBCore.Functions.GetPlayer(payload.inventoryId)
     local charname = Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname
     metadata.noteid = GenerateNotepadId()
+    metadata.unique = true
     metadata.description = ('Barcode: %s\n\nOwner: %s'):format(metadata.noteid, charname)
     MySQL.insert.await('INSERT INTO rnotes (citizenid, notes, noteid) VALUES (?, ?, ?)', {Player.PlayerData.citizenid, json.encode({}), metadata.noteid})
     return metadata
-end, { print = false, itemFilter = { notepad = true } })
+end, {
+    print = false,
+    itemFilter = {
+        notepad = true
+    }
+})
