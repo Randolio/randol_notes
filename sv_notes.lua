@@ -75,7 +75,7 @@ RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
             end
         end
         if removed then
-            MySQL.update('UPDATE rnotes SET notes = ? noteid = ?', {json.encode(existingNotes), noteid})
+            MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
             QBCore.Functions.Notify(src, 'Successfully deleted note with ID ' .. noteId, 'success')
             Wait(500)
             TriggerClientEvent("randol_notes:client:useItem", src, noteid)
