@@ -2,8 +2,9 @@
 - https://streamable.com/hksbds
 
 # Requirements:
-- https://github.com/overextended/ox_inventory
-- https://github.com/overextended/ox_lib
+- [ox_inventory](https://github.com/overextended/ox_inventory)
+- [ox_lib](https://github.com/overextended/ox_lib)
+- [scully_emotemenu](https://github.com/Scullyy/scully_emotemenu)
 
 # Items to add to ox inventory
 
