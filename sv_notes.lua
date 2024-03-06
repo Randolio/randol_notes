@@ -12,12 +12,11 @@ local function GenerateNotepadId()
     return (result[1] and GenerateNotepadId()) or gen
 end
 
-QBCore.Functions.CreateUseableItem("notepad", function(source, item)
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    if ox_inv:Search(src, 'count', item.name) > 0 then
-        if item.metadata.noteid then
-            TriggerClientEvent("randol_notes:client:useItem", src, item.metadata.noteid)
+exports('notepad', function(event, item, inventory, slot, data)
+    if event == 'usingItem' then
+        local metadata = inventory.items[slot].metadata
+        if metadata.noteid then
+            TriggerClientEvent("randol_notes:client:useItem", inventory.id, metadata.noteid)
         end
     end
 end)
