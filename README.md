@@ -7,24 +7,26 @@
 
 # Items to add to ox inventory
 
-    ["notepad"] = {
-        label = "Notepad",
-        weight = 0,
-        stack = false,
-        close = true,
-        consume = 0,
-        description = "Sometimes handy to remember something :)",
-        server = {
-            export = 'randol_notes.notepad',
-        },
+```lua
+["notepad"] = {
+    label = "Notepad",
+    weight = 0,
+    stack = false,
+    close = true,
+    consume = 0,
+    description = "Sometimes handy to remember something :)",
+    server = {
+        export = 'randol_notes.notepad',
     },
-    
-    ["tornnote"] = {
-        label = "Torn Note",
-        weight = 0,
-        stack = false,
-        close = false,
-    },
+},
+
+["tornnote"] = {
+    label = "Torn Note",
+    weight = 0,
+    stack = false,
+    close = false,
+},
+```
 
 # 
 Run the sql. Put the notepad in a shop or in a loot pool somewhere. 
