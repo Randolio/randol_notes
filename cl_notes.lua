@@ -8,8 +8,10 @@ local function ManageNote(data, noteid)
     local manageNotes = "manage_notes"
     local notes_manage = {
         id = manageNotes,
-        canClose = false,
         title = "Manage Notes",
+        onExit = function()
+            CloseNotepad()
+        end,
         options = {
             {
                 title = "Delete Note",
@@ -26,13 +28,6 @@ local function ManageNote(data, noteid)
                 icon = "fa-solid fa-trash",
                 onSelect = function()
                     TriggerServerEvent('randol_notes:server:ripNote', data, noteid)
-                    CloseNotepad()
-                end,
-            },
-            {
-                title = "Close",
-                icon = "fa-solid fa-xmark",
-                onSelect = function()
                     CloseNotepad()
                 end,
             },
@@ -64,14 +59,7 @@ local function NotepadTask(task, noteid)
                     },
                 }
             end
-            viewNotes[#viewNotes+1] = {
-                title = "Close",
-                icon = "fa-solid fa-xmark",
-                onSelect = function()
-                    CloseNotepad()
-                end,
-            }
-            lib.registerContext({ id = 'noteMenu2', title = "Saved Notes", canClose = false, options = viewNotes })
+            lib.registerContext({ id = 'noteMenu2', title = "Saved Notes", onExit = function() CloseNotepad() end, options = viewNotes })
             lib.showContext('noteMenu2')
         else
             CloseNotepad()
@@ -116,8 +104,10 @@ local function OpenNotepad(noteid)
     local some_id = "notepadinit"
     local notepadMenu = {
         id = some_id,
-        canClose = false,
         title = "Notebook",
+        onExit = function()
+            CloseNotepad()
+        end,
         options = {
             {
                 title = "My Notes",
@@ -141,13 +131,6 @@ local function OpenNotepad(noteid)
                 icon = "fa-solid fa-pencil",
                 onSelect = function()
                     NotepadTask('newtorn')
-                end,
-            },
-            {
-                title = "Close",
-                icon = "fa-solid fa-xmark",
-                onSelect = function()
-                    CloseNotepad()
                 end,
             },
         }
