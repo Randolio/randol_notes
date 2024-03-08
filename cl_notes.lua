@@ -1,3 +1,23 @@
+local PROP_NOTEPAD, PROP_PENCIL
+
+local function ToggleAnimation(bool)
+    if bool then
+        lib.requestAnimDict('missheistdockssetup1clipboard@base', 2000)
+        local coords = GetEntityCoords(cache.ped)
+        PROP_NOTEPAD = CreateObject(`prop_notepad_01`, coords, true, true, true)
+        PROP_PENCIL = CreateObject(`prop_pencil_01`, coords, true, true, true)
+        AttachEntityToEntity(PROP_NOTEPAD, cache.ped, GetPedBoneIndex(cache.ped, 18905), 0.1, 0.02, 0.05, 10.0, 0.0, 0.0, true, true, false, true, 1, true)
+        AttachEntityToEntity(PROP_PENCIL, cache.ped, GetPedBoneIndex(cache.ped, 58866), 0.11, -0.02, 0.001, -120.0, 0.0, 0.0, true, true, false, true, 1, true)
+        TaskPlayAnim(cache.ped, 'missheistdockssetup1clipboard@base', 'base', 8.0, 1.0, -1, 49, 0, 0, 0, 0 )
+    else
+        DetachEntity(PROP_NOTEPAD, true, true)
+        DeleteEntity(PROP_NOTEPAD)
+        DetachEntity(PROP_PENCIL, true, true)
+        DeleteObject(PROP_PENCIL)
+        PROP_NOTEPAD, PROP_PENCIL = nil
+        ClearPedTasks(cache.ped)
+    end
+end
 
 local function CloseNotepad()
     ToggleAnimation(false)
@@ -42,7 +62,7 @@ local function NotepadTask(task, noteid)
         local data = lib.callback.await('randol_notes:server:getNotes', false, noteid)
         if data then
             local viewNotes = {}
-            for i=1, #data do
+            for i = 1, #data do
                 local v = data[i]
                 local test = v.text
                 if string.len(v.text) > 10 then test = string.sub(v.text, 1, 10) .. ".." end

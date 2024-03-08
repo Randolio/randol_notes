@@ -29,7 +29,8 @@
 ```
 
 # 
-Run the sql. Put the notepad in a shop or in a loot pool somewhere. 
+Edit: The SQL is automatically inserted into your database on resource start to save you an extra step.
+
 It will automatically assign an id to the notepad and insert a row into the database for it when it's created.
 
 I DO NOT PROVIDE SUPPORT CAUSE IT'S A FREE SCRIPT AND I DON'T HAVE THE BRAIN CAPACITY TO DEAL WITH DUMB PEOPLE. IT WORKS ON MY MACHINE SO.
