@@ -34,3 +34,27 @@ Edit: The SQL is automatically inserted into your database on resource start to 
 It will automatically assign an id to the notepad and insert a row into the database for it when it's created.
 
 I DO NOT PROVIDE SUPPORT CAUSE IT'S A FREE SCRIPT AND I DON'T HAVE THE BRAIN CAPACITY TO DEAL WITH DUMB PEOPLE. IT WORKS ON MY MACHINE SO.
+
+**IMPORTANT**: 
+If renaming the notepad item to something else, make sure you also change it in the NOTEPAD_HOOK:
+
+```lua
+local NOTEPAD_HOOK = ox_inv:registerHook('createItem', function(payload)
+    local metadata = payload.metadata
+    if metadata.unique then
+        return metadata
+    end
+    local Player = QBCore.Functions.GetPlayer(payload.inventoryId)
+    local charname = Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname
+    metadata.noteid = GenerateNotepadId()
+    metadata.unique = true
+    metadata.description = ('Barcode: %s\n\nOwner: %s'):format(metadata.noteid, charname)
+    MySQL.insert.await('INSERT INTO rnotes (citizenid, notes, noteid) VALUES (?, ?, ?)', {Player.PlayerData.citizenid, json.encode({}), metadata.noteid})
+    return metadata
+end, {
+    print = false,
+    itemFilter = {
+        notepad = true -- if you rename your item to 'penis', it would have to be changed here to: penis = true
+    }
+})
+```
