@@ -1,6 +1,6 @@
 local ox_inv = exports.ox_inventory
 
-local function GenerateNotepadId()
+local function generateNotepadId()
     local characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     local gen = ""
 
@@ -9,7 +9,7 @@ local function GenerateNotepadId()
         gen = gen..string.sub(characters, randomChar, randomChar)
     end
     local result = MySQL.query.await('SELECT noteid FROM rnotes WHERE noteid = ?', {gen})
-    return (result[1] and GenerateNotepadId()) or gen
+    return (result[1] and generateNotepadId()) or gen
 end
 
 exports('notepad', function(event, item, inventory, slot, data)
@@ -23,7 +23,7 @@ end)
 
 lib.callback.register('randol_notes:server:getNotes', function(source, noteid)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
+    local player = GetPlayer(src)
     local notesData = {}
     local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
 
@@ -38,7 +38,7 @@ end)
 
 RegisterNetEvent('randol_notes:server:newNote', function(note, isSigned, noteid)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
+    local player = GetPlayer(src)
     local currentDate = os.date("%d-%m-%Y")
     local existingNotes = {}
     local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
@@ -50,7 +50,7 @@ RegisterNetEvent('randol_notes:server:newNote', function(note, isSigned, noteid)
         existingNotes[#existingNotes+1] = newNote 
 
         MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
-        QBCore.Functions.Notify(src, 'New note added with ID ' .. newNote.id .. ': ' .. note, 'success')
+        DoNotification(src, 'New note added with ID ' .. newNote.id .. ': ' .. note, 'success')
         Wait(500)
         TriggerClientEvent("randol_notes:client:useItem", src, noteid)
     end
@@ -58,7 +58,7 @@ end)
 
 RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
+    local player = GetPlayer(src)
     local noteId = tonumber(data.id)
     local result = MySQL.query.await('SELECT notes FROM rnotes WHERE noteid = ?', {noteid})
     local existingNotes = {}
@@ -75,28 +75,17 @@ RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
         end
         if removed then
             MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
-            QBCore.Functions.Notify(src, 'Successfully deleted note with ID ' .. noteId, 'success')
+            DoNotification(src, 'Successfully deleted note with ID ' .. noteId, 'success')
             Wait(500)
             TriggerClientEvent("randol_notes:client:useItem", src, noteid)
         end
     end
 end)
 
-QBCore.Commands.Add("tornnote", "", {}, false, function(source, args)
-    local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    local msg = table.concat(args, ' ')
-    local name = 'Unsigned'
-    local currentDate = os.date("%d-%m-%Y")
-    local description = ('%s | %s\n\nNote: %s'):format(currentDate, name, msg)
-    local metadata = { note = msg, description = description, }
-    ox_inv:AddItem(src, 'tornnote', 1, metadata)
-end, "god")
-
 RegisterNetEvent('randol_notes:server:newTornNote', function(note, isSigned)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    local name = (isSigned and Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname) or 'Unsigned'
+    local player = GetPlayer(src)
+    local name = (isSigned and GetCharacterName(player)) or 'Unsigned'
     local message = note
     local currentDate = os.date("%d-%m-%Y")
     local date = currentDate
@@ -107,8 +96,8 @@ end)
 
 RegisterNetEvent('randol_notes:server:ripNote', function(data, noteid)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    local name = (data.signed and Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname) or 'Unsigned'
+    local player = GetPlayer(src)
+    local name = (data.signed and GetCharacterName(player)) or 'Unsigned'
     local message = data.text
     local date = data.date
     local description = ('%s | %s\n\nNote: %s'):format(date, name, message)
@@ -130,7 +119,7 @@ RegisterNetEvent('randol_notes:server:ripNote', function(data, noteid)
         end
         if removed then
             MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
-            QBCore.Functions.Notify(src, "Note successfully ripped out.", "success")
+            DoNotification(src, "Note successfully ripped out.", "success")
             ox_inv:AddItem(src, 'tornnote', 1, metadata)
         end
     end
@@ -138,15 +127,17 @@ end)
 
 local NOTEPAD_HOOK = ox_inv:registerHook('createItem', function(payload)
     local metadata = payload.metadata
-    if metadata.unique then
-        return metadata
-    end
-    local Player = QBCore.Functions.GetPlayer(payload.inventoryId)
-    local charname = Player.PlayerData.charinfo.firstname..' '..Player.PlayerData.charinfo.lastname
-    metadata.noteid = GenerateNotepadId()
+    if metadata.unique then return metadata end
+
+    local player = GetPlayer(payload.inventoryId)
+    local cid = GetPlyIdentifier(player)
+    local charname = GetCharacterName(player)
+
+    metadata.noteid = generateNotepadId()
     metadata.unique = true
     metadata.description = ('Barcode: %s\n\nOwner: %s'):format(metadata.noteid, charname)
-    MySQL.insert.await('INSERT INTO rnotes (citizenid, notes, noteid) VALUES (?, ?, ?)', {Player.PlayerData.citizenid, json.encode({}), metadata.noteid})
+    MySQL.insert.await('INSERT INTO rnotes (citizenid, notes, noteid) VALUES (?, ?, ?)', {cid, json.encode({}), metadata.noteid})
+
     return metadata
 end, {
     print = false,
@@ -161,7 +152,7 @@ AddEventHandler('onResourceStart', function(resource)
         CREATE TABLE IF NOT EXISTS `rnotes` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `noteid` varchar(50) NOT NULL DEFAULT '0',
-        `citizenid` varchar(50) NOT NULL DEFAULT '0',
+        `citizenid` varchar(100) NOT NULL DEFAULT '0',
         `notes` longtext NOT NULL,
         PRIMARY KEY (`id`));
     ]=])
