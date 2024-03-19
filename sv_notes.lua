@@ -49,8 +49,8 @@ RegisterNetEvent('randol_notes:server:newNote', function(note, isSigned, noteid)
         local newNote = { id = #existingNotes + 1, text = note, signed = isSigned, date = currentDate }
         existingNotes[#existingNotes+1] = newNote 
 
-        MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
-        DoNotification(src, 'New note added with ID ' .. newNote.id .. ': ' .. note, 'success')
+        MySQL.update.await('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
+        DoNotification(src, ('New note added with ID %s : %s'):format(newNote.id, note), 'success')
         Wait(500)
         TriggerClientEvent("randol_notes:client:useItem", src, noteid)
     end
@@ -74,8 +74,8 @@ RegisterNetEvent('randol_notes:server:deleteNote', function(data, noteid)
             end
         end
         if removed then
-            MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
-            DoNotification(src, 'Successfully deleted note with ID ' .. noteId, 'success')
+            MySQL.update.await('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
+            DoNotification(src, ('Successfully deleted note #%s'):format(noteId), 'success')
             Wait(500)
             TriggerClientEvent("randol_notes:client:useItem", src, noteid)
         end
@@ -118,7 +118,7 @@ RegisterNetEvent('randol_notes:server:ripNote', function(data, noteid)
             end
         end
         if removed then
-            MySQL.update('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
+            MySQL.update.await('UPDATE rnotes SET notes = ? WHERE noteid = ?', {json.encode(existingNotes), noteid})
             DoNotification(src, "Note successfully ripped out.", "success")
             ox_inv:AddItem(src, 'tornnote', 1, metadata)
         end

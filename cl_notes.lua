@@ -35,7 +35,7 @@ local function ManageNote(data, noteid)
         options = {
             {
                 title = 'Delete Note',
-                description = 'Delete note #'..data.id,
+                description = ('Delete note #%s'):format(data.id),
                 icon = 'fa-solid fa-trash',
                 onSelect = function()
                     TriggerServerEvent('randol_notes:server:deleteNote', data, noteid)
@@ -44,7 +44,7 @@ local function ManageNote(data, noteid)
             },
             {
                 title = 'Rip Out Note',
-                description = 'Rip out note #'..data.id..' and give to someone.',
+                description = ('Rip out note #%s and give to someone.'):format(data.id),
                 icon = 'fa-solid fa-trash',
                 onSelect = function()
                     TriggerServerEvent('randol_notes:server:ripNote', data, noteid)
@@ -69,7 +69,7 @@ local function NotepadTask(task, noteid)
                 local signed = (v.signed and 'Signed') or 'Unsigned'
                 viewNotes[#viewNotes+1] = {
                     title = test,
-                    description = ''..v.date..' ['..signed..']',
+                    description = ('%s [%s]'):format(v.date, signed),
                     icon = 'fa-solid fa-note-sticky',
                     onSelect = function()
                         ManageNote(v, noteid)
@@ -83,8 +83,7 @@ local function NotepadTask(task, noteid)
             lib.showContext('noteMenu2')
         else
             CloseNotepad()
-            DoNotification('You don\'t have any notes saved.', 'error')
-            return
+            return DoNotification('You don\'t have any notes saved.', 'error')
         end
     elseif task == 'new' then
         local input = lib.inputDialog('New Note', {
@@ -95,26 +94,15 @@ local function NotepadTask(task, noteid)
                 placeholder = 'Met up with all the homies today and kissed them at the park. Spicy.'
             },
             {type = 'checkbox', label = 'Sign the note?'},
+            {type = 'checkbox', label = 'Tear out?'},
         })
         if not input then ToggleAnimation(false) return end
-        local message = input[1]
-        local signed = input[2]
-        TriggerServerEvent('randol_notes:server:newNote', message, signed, noteid)
-        ToggleAnimation(false)
-    elseif task == 'newtorn' then
-        local input = lib.inputDialog('Create Torn Note', {
-            {
-                type = 'textarea',
-                label = 'Write your message below.',
-                required = true,
-                placeholder = 'Met up with all the homies today and kissed them at the park. Spicy.'
-            },
-            {type = 'checkbox', label = 'Sign the note?'},
-        })
-        if not input then ToggleAnimation(false) return end
-        local message = input[1]
-        local signed = input[2]
-        TriggerServerEvent('randol_notes:server:newTornNote', message, signed)
+        local message, signed, tear = input[1], input[2], input[3]
+        if tear then
+            TriggerServerEvent('randol_notes:server:newTornNote', message, signed)
+        else
+            TriggerServerEvent('randol_notes:server:newNote', message, signed, noteid)
+        end
         ToggleAnimation(false)
     end
 end
@@ -143,14 +131,6 @@ local function OpenNotepad(noteid)
                 icon = 'fa-solid fa-pencil',
                 onSelect = function()
                     NotepadTask('new', noteid)
-                end,
-            },
-            {
-                title = 'New Note (Torn)',
-                description = 'Write a new note to tear out straight away',
-                icon = 'fa-solid fa-pencil',
-                onSelect = function()
-                    NotepadTask('newtorn')
                 end,
             },
         }
