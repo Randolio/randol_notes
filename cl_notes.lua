@@ -1,6 +1,6 @@
 local PROP_NOTEPAD, PROP_PENCIL
 
-local function ToggleAnimation(bool)
+local function toggleAnimation(bool)
     if bool then
         lib.requestAnimDict('missheistdockssetup1clipboard@base', 2000)
         local coords = GetEntityCoords(cache.ped)
@@ -19,18 +19,18 @@ local function ToggleAnimation(bool)
     end
 end
 
-local function CloseNotepad()
-    ToggleAnimation(false)
+local function closeNotepad()
+    toggleAnimation(false)
     lib.hideContext()
 end
 
-local function ManageNote(data, noteid)
+local function manageNotes(data, noteid)
     local manageNotes = 'manage_notes'
     local notes_manage = {
         id = manageNotes,
         title = 'Manage Notes',
         onExit = function()
-            CloseNotepad()
+            closeNotepad()
         end,
         options = {
             {
@@ -39,7 +39,7 @@ local function ManageNote(data, noteid)
                 icon = 'fa-solid fa-trash',
                 onSelect = function()
                     TriggerServerEvent('randol_notes:server:deleteNote', data, noteid)
-                    CloseNotepad()
+                    closeNotepad()
                 end,
             },
             {
@@ -48,7 +48,7 @@ local function ManageNote(data, noteid)
                 icon = 'fa-solid fa-trash',
                 onSelect = function()
                     TriggerServerEvent('randol_notes:server:ripNote', data, noteid)
-                    CloseNotepad()
+                    closeNotepad()
                 end,
             },
         }
@@ -57,7 +57,7 @@ local function ManageNote(data, noteid)
     lib.showContext(manageNotes)
 end
 
-local function NotepadTask(task, noteid)
+local function notepadTask(task, noteid)
     if task == 'view' then
         local data = lib.callback.await('randol_notes:server:getNotes', false, noteid)
         if data then
@@ -72,17 +72,17 @@ local function NotepadTask(task, noteid)
                     description = ('%s [%s]'):format(v.date, signed),
                     icon = 'fa-solid fa-note-sticky',
                     onSelect = function()
-                        ManageNote(v, noteid)
+                        manageNotes(v, noteid)
                     end,
                     metadata = {
                         {label = 'Note', value = v.text},
                     },
                 }
             end
-            lib.registerContext({ id = 'noteMenu2', title = 'Saved Notes', onExit = function() CloseNotepad() end, options = viewNotes })
+            lib.registerContext({ id = 'noteMenu2', title = 'Saved Notes', onExit = function() closeNotepad() end, options = viewNotes })
             lib.showContext('noteMenu2')
         else
-            CloseNotepad()
+            closeNotepad()
             return DoNotification('You don\'t have any notes saved.', 'error')
         end
     elseif task == 'new' then
@@ -96,33 +96,31 @@ local function NotepadTask(task, noteid)
             {type = 'checkbox', label = 'Sign the note?'},
             {type = 'checkbox', label = 'Tear out?'},
         })
-        if not input then ToggleAnimation(false) return end
+        toggleAnimation(false)
+        if not input then return end
         local message, signed, tear = input[1], input[2], input[3]
         if tear then
             TriggerServerEvent('randol_notes:server:newTornNote', message, signed)
         else
             TriggerServerEvent('randol_notes:server:newNote', message, signed, noteid)
         end
-        ToggleAnimation(false)
     end
 end
 
-local function OpenNotepad(noteid)
-    ToggleAnimation(true)
+local function openNotepad(noteid)
+    toggleAnimation(true)
     local some_id = 'notepadinit'
     local notepadMenu = {
         id = some_id,
         title = 'Notebook',
-        onExit = function()
-            CloseNotepad()
-        end,
+        onExit = function() closeNotepad() end,
         options = {
             {
                 title = 'My Notes',
                 description = 'View my notes.',
                 icon = 'fa-solid fa-note-sticky',
                 onSelect = function()
-                    NotepadTask('view', noteid)
+                    notepadTask('view', noteid)
                 end,
             },
             {
@@ -130,7 +128,7 @@ local function OpenNotepad(noteid)
                 description = 'Write a new note to save.',
                 icon = 'fa-solid fa-pencil',
                 onSelect = function()
-                    NotepadTask('new', noteid)
+                    notepadTask('new', noteid)
                 end,
             },
         }
@@ -141,5 +139,5 @@ end
 
 RegisterNetEvent('randol_notes:client:useItem', function(noteid)
     if GetInvokingResource() then return end
-    OpenNotepad(noteid)
+    openNotepad(noteid)
 end)
