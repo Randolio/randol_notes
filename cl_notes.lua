@@ -60,31 +60,26 @@ end
 local function notepadTask(task, noteid)
     if task == 'view' then
         local data = lib.callback.await('randol_notes:server:getNotes', false, noteid)
-        if data then
-            local viewNotes = {}
-            for i = 1, #data do
-                local v = data[i]
-                local test = v.text
-                if string.len(v.text) > 10 then test = string.sub(v.text, 1, 10) .. '..' end
-                local signed = (v.signed and 'Signed') or 'Unsigned'
-                viewNotes[#viewNotes+1] = {
-                    title = test,
-                    description = ('%s [%s]'):format(v.date, signed),
-                    icon = 'fa-solid fa-note-sticky',
-                    onSelect = function()
-                        manageNotes(v, noteid)
-                    end,
-                    metadata = {
-                        {label = 'Note', value = v.text},
-                    },
-                }
-            end
-            lib.registerContext({ id = 'noteMenu2', title = 'Saved Notes', onExit = function() closeNotepad() end, options = viewNotes })
-            lib.showContext('noteMenu2')
-        else
-            closeNotepad()
-            return DoNotification('You don\'t have any notes saved.', 'error')
+        local viewNotes = {}
+        for i = 1, #data do
+            local v = data[i]
+            local test = v.text
+            if string.len(v.text) > 10 then test = string.sub(v.text, 1, 10) .. '..' end
+            local signed = (v.signed and 'Signed') or 'Unsigned'
+            viewNotes[#viewNotes+1] = {
+                title = test,
+                description = ('%s [%s]'):format(v.date, signed),
+                icon = 'fa-solid fa-note-sticky',
+                onSelect = function()
+                    manageNotes(v, noteid)
+                end,
+                metadata = {
+                    {label = 'Note', value = v.text},
+                },
+            }
         end
+        lib.registerContext({ id = 'noteMenu2', title = 'Saved Notes', onExit = function() closeNotepad() end, options = viewNotes })
+        lib.showContext('noteMenu2')
     elseif task == 'new' then
         local input = lib.inputDialog('New Note', {
             {
