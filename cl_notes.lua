@@ -9,6 +9,7 @@ local function toggleAnimation(bool)
         AttachEntityToEntity(PROP_NOTEPAD, cache.ped, GetPedBoneIndex(cache.ped, 18905), 0.1, 0.02, 0.05, 10.0, 0.0, 0.0, true, true, false, true, 1, true)
         AttachEntityToEntity(PROP_PENCIL, cache.ped, GetPedBoneIndex(cache.ped, 58866), 0.11, -0.02, 0.001, -120.0, 0.0, 0.0, true, true, false, true, 1, true)
         TaskPlayAnim(cache.ped, 'missheistdockssetup1clipboard@base', 'base', 8.0, 1.0, -1, 49, 0, 0, 0, 0 )
+        RemoveAnimDict('missheistdockssetup1clipboard@base')
     else
         DetachEntity(PROP_NOTEPAD, true, true)
         DeleteEntity(PROP_NOTEPAD)
